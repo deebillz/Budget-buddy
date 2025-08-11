@@ -117,16 +117,6 @@
     // summary for selected month
     const rows = state.items.filter(it => it.date.startsWith(state.month));
     let income = rows.filter(x=>x.amount>0).reduce((a,b)=>a+b.amount,0);
-    // Add current pay-period budget to income when it overlaps selected month
-    (function(){
-      const gb = load(GLOBAL_BUDGET, null);
-      if (gb && gb.amount>0){
-        const range = getPeriodRange(gb.periodType, new Date(), gb.anchor);
-        const mStart = new Date(state.month+'-01');
-        const mEnd = new Date(mStart.getFullYear(), mStart.getMonth()+1, 0);
-        if (range.end >= mStart && range.start <= mEnd) income += gb.amount;
-      }
-    })();
     const expenses = rows.filter(x=>x.amount<0).reduce((a,b)=>a+Math.abs(b.amount),0);
     $('#sum-income').textContent = fmt(income);
     $('#sum-expense').textContent = fmt(expenses);
@@ -312,16 +302,6 @@
     $('#report-title').textContent = `Summary for ${state.month}`;
     const rows = state.items.filter(it => it.date.startsWith(state.month));
     let income = rows.filter(x=>x.amount>0).reduce((a,b)=>a+b.amount,0);
-    // Add current pay-period budget to income when it overlaps selected month
-    (function(){
-      const gb = load(GLOBAL_BUDGET, null);
-      if (gb && gb.amount>0){
-        const range = getPeriodRange(gb.periodType, new Date(), gb.anchor);
-        const mStart = new Date(state.month+'-01');
-        const mEnd = new Date(mStart.getFullYear(), mStart.getMonth()+1, 0);
-        if (range.end >= mStart && range.start <= mEnd) income += gb.amount;
-      }
-    })();
     const expense = rows.filter(x=>x.amount<0).reduce((a,b)=>a+Math.abs(b.amount),0);
     $('#r-income').textContent = fmt(income); $('#r-expense').textContent = fmt(expense); $('#r-net').textContent = fmt(income-expense);
 
