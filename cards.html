@@ -22,29 +22,12 @@
   </div>
 </div>
 
-<div class="container grid two">
-  <section class="card">
-    <h2>Card Balances (<span id="month-label"></span>)</h2>
-    <div id="card-balances"></div>
-  </section>
-
-  <section class="card">
-    <h2>Set Balances</h2>
-    <form id="card-form">
-      <div class="grid two">
-        <label>Unpaid <input type="number" step="0.01" data-card="Unpaid" /></label>
-        <label>Amex Plat <input type="number" step="0.01" data-card="Amex Plat" /></label>
-        <label>Amex Gold <input type="number" step="0.01" data-card="Amex Gold" /></label>
-        <label>Amex Blue <input type="number" step="0.01" data-card="Amex Blue" /></label>
-        <label>Amex Hilton <input type="number" step="0.01" data-card="Amex Hilton" /></label>
-        <label>CSP <input type="number" step="0.01" data-card="CSP" /></label>
-        <label>CFF <input type="number" step="0.01" data-card="CFF" /></label>
-        <label>CFU <input type="number" step="0.01" data-card="CFU" /></label>
-      </div>
-      <div class="row" style="justify-content:flex-end;margin-top:10px"><button type="submit" class="primary">Save</button></div>
-    </form>
-  </section>
+<div class="container card">
+  <h2>Card Balances (<span id="month-label"></span>)</h2>
+  <div id="card-balances"></div>
+  <p class="muted" style="margin-top:8px">Balances are calculated from Transactions for the selected month (expenses raise balance; income on a card reduces it).</p>
 </div>
-<footer class="footer">Made with ❤️ — data stays in your browser (localStorage).</footer>
-<script src="app.js?v=72"></script>
+
+<footer class="footer">Made with ❤️ — your data stays in your browser (localStorage).</footer>
+<script src="app.js"></script>
 </body></html>
