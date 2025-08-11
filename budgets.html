@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Budget Buddy — Budgets</title><link rel="stylesheet" href="style.css" /><link rel="icon" href="favicon.svg" type="image/svg+xml"></head>
+<body data-page="budgets">
+<div class="header">
+  <div class="wrap">
+    <div class="brand"><span>💸</span><h1>Budget Buddy</h1></div>
+    <nav class="nav">
+      <a href="index.html" data-nav="dashboard">Dashboard</a>
+      <a href="transactions.html" data-nav="transactions">Transactions</a>
+      <a href="budgets.html" data-nav="budgets">Budgets</a>
+      <a href="cards.html" data-nav="cards">Cards</a>
+      <a href="reports.html" data-nav="reports">Reports</a>
+    </nav>
+    <div class="controls">
+      <label class="row" style="gap:6px">Month
+        <input type="month" id="global-month" />
+      </label>
+      <button id="toggle-theme" title="Toggle light/dark">🌓</button>
+      <button id="export-csv" class="primary">Export CSV</button>
+    </div>
+  </div>
+</div>
+
+<div class="container grid two">
+
+  <section class="card">
+    <h2>Category Budgets (<span id="month-label"></span>)</h2>
+    <div class="grid two">
+      <div>
+        <h3>Group 1</h3>
+        <div id="group1"></div>
+      </div>
+      <div>
+        <h3>Group 2</h3>
+        <div id="group2"></div>
+      </div>
+      <div>
+        <h3>Group 3</h3>
+        <div id="group3"></div>
+      </div>
+    </div>
+    <div class="row" style="justify-content:space-between;margin-top:10px">
+      <div class="muted">Total Split</div>
+      <div class="percent-row"><span id="split-used-left">0%</span><span class="muted" id="split-left-right">100%</span></div>
+    </div>
+    <div class="progress" id="split-bar"><div class="bar" style="width:0%"></div></div>
+    <div class="row" style="justify-content:space-between;margin-top:10px">
+      <div class="muted">Used <span id="split-used">$0.00</span> • Left <span id="split-left">$0.00</span></div>
+      <div class="muted">Budget <span id="split-budget">$0.00</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Set Category Budgets</h2>
+    <form id="budget-form">
+      <div class="grid two">
+        <label>Gas <input type="number" step="0.01" data-bc="Gas" /></label>
+        <label>Entertainment <input type="number" step="0.01" data-bc="Entertainment" /></label>
+        <label>Amazon <input type="number" step="0.01" data-bc="Amazon" /></label>
+        <label>Others <input type="number" step="0.01" data-bc="Others" /></label>
+        <label>Supermarket <input type="number" step="0.01" data-bc="Supermarket" /></label>
+        <label>Target <input type="number" step="0.01" data-bc="Target" /></label>
+        <label>Walmart <input type="number" step="0.01" data-bc="Walmart" /></label>
+        <label>Personal <input type="number" step="0.01" data-bc="Personal" /></label>
+      </div>
+      <div class="row" style="justify-content:flex-end;margin-top:10px"><button type="submit" class="primary">Save</button></div>
+    </form>
+  </section>
+
+</div>
+<footer class="footer">Made with ❤️ — data stays in your browser (localStorage).</footer>
+<script src="app.js"></script>
+</body></html>

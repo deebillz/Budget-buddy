@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Budget Buddy — Reports</title><link rel="stylesheet" href="style.css" /><link rel="icon" href="favicon.svg" type="image/svg+xml"></head>
+<body data-page="reports">
+<div class="header">
+  <div class="wrap">
+    <div class="brand"><span>💸</span><h1>Budget Buddy</h1></div>
+    <nav class="nav">
+      <a href="index.html" data-nav="dashboard">Dashboard</a>
+      <a href="transactions.html" data-nav="transactions">Transactions</a>
+      <a href="budgets.html" data-nav="budgets">Budgets</a>
+      <a href="cards.html" data-nav="cards">Cards</a>
+      <a href="reports.html" data-nav="reports">Reports</a>
+    </nav>
+    <div class="controls">
+      <label class="row" style="gap:6px">Month
+        <input type="month" id="global-month" />
+      </label>
+      <button id="toggle-theme" title="Toggle light/dark">🌓</button>
+      <button id="export-csv" class="primary">Export CSV</button>
+    </div>
+  </div>
+</div>
+
+<div class="container grid two">
+  <section class="card" style="grid-column:1/-1">
+    <h2>Monthly Reports</h2>
+    <div class="row">
+      <label style="min-width:240px">Month <input type="month" id="month-pick" /></label>
+      <a id="open-month" href="#"><button class="primary">Open</button></a>
+      <a id="open-current" href="#"><button class="ghost">Current Month</button></a>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3 id="report-title">Summary</h3>
+      <div class="row">
+        <div class="pill">Income: <span id="r-income">$0.00</span></div>
+        <div class="pill">Expenses: <span id="r-expense">$0.00</span></div>
+        <div class="pill">Net: <span id="r-net">$0.00</span></div>
+      </div>
+      <div class="row" style="justify-content:space-between;margin-top:10px">
+        <div class="muted">Budget Progress</div>
+        <div class="percent-row"><span id="r-used-left">0%</span><span class="muted" id="r-left-right">100%</span></div>
+      </div>
+      <div class="progress" id="r-bar"><div class="bar" style="width:0%"></div></div>
+      <div class="row" style="justify-content:space-between;margin-top:10px">
+        <div class="muted">Used <span id="r-used">$0.00</span> • Left <span id="r-left">$0.00</span></div>
+        <div class="muted">Budget <span id="r-budget">$0.00</span> • <span id="r-label"></span></div>
+      </div>
+      <div class="table" style="margin-top:10px"><table id="r-cats">
+        <thead><tr><th>Category</th><th class="right">Spent</th></tr></thead><tbody></tbody>
+      </table></div>
+    </div>
+  </section>
+</div>
+<footer class="footer">Made with ❤️ — data stays in your browser (localStorage).</footer>
+<script src="app.js"></script>
+</body></html>
