@@ -118,7 +118,45 @@
     const rows = state.items.filter(it => it.date.startsWith(state.month));
     let income = rows.filter(x=>x.amount>0).reduce((a,b)=>a+b.amount,0);
     const expenses = rows.filter(x=>x.amount<0).reduce((a,b)=>a+Math.abs(b.amount),0);
-    $('#sum-income').textContent = fmt(income);
+    
+    // Add budgeted pay-period amounts that overlap the selected month
+    (function(){
+      const gb = load(GLOBAL_BUDGET, null);
+      if (!gb || !(gb.amount>0)) return;
+      const mStart = new Date(state.month + '-01');
+      const mEnd = new Date(mStart.getFullYear(), mStart.getMonth()+1, 0);
+      function overlapsCount(){
+        const type = gb.periodType || 'monthly';
+        if (type==='monthly') return 1;
+        if (type==='semimonthly') return 2;
+        if (type==='weekly'){
+          let count=0;
+          let d = new Date(mStart);
+          d.setDate(d.getDate() - d.getDay()); // back to Sunday
+          while (d <= mEnd){
+            const wStart = new Date(d);
+            const wEnd = new Date(d); wEnd.setDate(wEnd.getDate()+6);
+            if (wEnd >= mStart && wStart <= mEnd) count++;
+            d.setDate(d.getDate()+7);
+          }
+          return Math.max(1,count);
+        }
+        if (type==='biweekly'){
+          const MS=86400000;
+          let start = gb.anchor ? new Date(gb.anchor) : new Date(mStart);
+          while (start > mStart) start = new Date(start.getTime()-14*MS);
+          let count=0;
+          for (let s=new Date(start); s<=mEnd; s=new Date(s.getTime()+14*MS)){
+            const e=new Date(s.getTime()+13*MS);
+            if (e >= mStart && s <= mEnd) count++;
+          }
+          return Math.max(1,count);
+        }
+        return 1;
+      }
+      try{ income += overlapsCount() * gb.amount; }catch(_){}
+    })();
+$('#sum-income').textContent = fmt(income);
     $('#sum-expense').textContent = fmt(expenses);
     $('#sum-net').textContent = fmt(income - expenses);
     const [usedPct, leftPct] = percentPair(expenses, Math.max(income, 1)); // relative to income
@@ -263,31 +301,82 @@
 
   // ---------- Cards ----------
   function initCards(){
-  renderCards();
-})();
+    $('#card-form').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const data = load(MONTH_CARD_BAL, {});
+      data[state.month] = data[state.month] || {};
+      document.querySelectorAll('[data-card]').forEach(inp => {
+        const k=inp.getAttribute('data-card'); const v=parseFloat(inp.value);
+        data[state.month][k] = isFinite(v) ? v : 0;
+      });
+      save(MONTH_CARD_BAL, data);
+      renderCards();
+      alert('Card balances saved.');
+    });
+    renderCards();
+  }
+  function renderCards(){
+    $('#month-label').textContent = state.month;
+    const data = load(MONTH_CARD_BAL, {}); const m = data[state.month] || {};
+    const cards = ['Unpaid','Amex Plat','Amex Gold','Amex Blue','Amex Hilton','CSP','CFF','CFU'];
+    // populate inputs
+    document.querySelectorAll('[data-card]')?.forEach(inp => { const k=inp.getAttribute('data-card'); inp.value = m[k] ?? ''; });
+    const div = $('#card-balances'); div.innerHTML='';
+    const tbl=document.createElement('table'); const tb=document.createElement('tbody');
+    let total=0;
+    cards.forEach(c => { const v=m[c]||0; total+=v; const tr=document.createElement('tr'); tr.innerHTML=`<td>${escape(c)}</td><td class="right">${fmt(v)}</td>`; tb.appendChild(tr); });
+    const tr=document.createElement('tr'); tr.innerHTML=`<td><b>Total</b></td><td class="right"><b>${fmt(total)}</b></td>`; tb.appendChild(tr);
+    tbl.innerHTML = '<thead><tr><th>Card</th><th class="right">Amount</th></tr></thead>'; tbl.appendChild(tb); div.appendChild(tbl);
+  }
 
-function renderCards(){
-  $('#month-label').textContent = state.month;
-  const cardsList = ['Amex Plat','Amex Gold','Amex Blue','Amex Hilton','CSP','CFF','CFU'];
-  // compute from transactions in selected month
-  const rows = state.items.filter(it => it.date && it.date.startsWith(state.month));
-  const sums = Object.fromEntries(cardsList.map(c => [c, 0]));
-  rows.forEach(it => {
-    const card = it.paymethod;
-    if (!cardsList.includes(card)) return; // ignore Cash, Debit, etc.
-    if (it.amount < 0){ sums[card] += Math.abs(it.amount); } // expense increases balance
-    else { sums[card] -= it.amount; } // income reduces balance (refund/credit)
-  });
-  // render table
-  const div = $('#card-balances'); if (!div) return;
-  const tbl = document.createElement('table');
-  const thead = document.createElement('thead'); thead.innerHTML = '<tr><th>Card</th><th class="right">Amount</th></tr>';
-  const tb = document.createElement('tbody');
-  let total = 0;
-  cardsList.forEach(c => { const v = +(sums[c]||0); total += v;
-    const tr = document.createElement('tr'); tr.innerHTML = `<td>${escape(c)}</td><td class="right">${fmt(v)}</td>`; tb.appendChild(tr);
-  });
-  const trt = document.createElement('tr'); trt.innerHTML = `<td><b>Total</b></td><td class="right"><b>${fmt(total)}</b></td>`; tb.appendChild(trt);
-  tbl.appendChild(thead); tbl.appendChild(tb);
-  div.innerHTML=''; div.appendChild(tbl);
-}
+  // ---------- Reports ----------
+  function initReports(){
+    $('#open-month').addEventListener('click', (e)=>{ e.preventDefault(); const v=$('#month-pick').value; if(!v) return; state.month=v; renderReports(); });
+    $('#open-current').addEventListener('click', (e)=>{ e.preventDefault(); const m=(new Date()).toISOString().slice(0,7); state.month=m; renderReports(); });
+    renderReports();
+  }
+  function renderReports(){
+    $('#month-pick').value = state.month;
+    $('#report-title').textContent = `Summary for ${state.month}`;
+    const rows = state.items.filter(it => it.date.startsWith(state.month));
+    let income = rows.filter(x=>x.amount>0).reduce((a,b)=>a+b.amount,0);
+    const expense = rows.filter(x=>x.amount<0).reduce((a,b)=>a+Math.abs(b.amount),0);
+    $('#r-income').textContent = fmt(income); $('#r-expense').textContent = fmt(expense); $('#r-net').textContent = fmt(income-expense);
+
+    // month budget
+    const map = load(MONTH_BUDGET, {}); const b = map[state.month] || {periodType:'monthly', amount: 0};
+    $('#r-label').textContent = (b.periodType? ({weekly:'Weekly',biweekly:'Bi-weekly',semimonthly:'Semi-monthly'}[b.periodType] || 'Monthly') : 'Monthly');
+    $('#r-budget').textContent = fmt(b.amount||0);
+    const [usedPct, leftPct] = percentPair(expense, b.amount||0);
+    $('#r-used-left').textContent = `${usedPct.toFixed(0)}%`; $('#r-left-right').textContent = `${leftPct.toFixed(0)}%`;
+    const bar=$('#r-bar'); bar.className='progress'+(usedPct<60?'':usedPct<90?' warn':' bad'); bar.querySelector('.bar').style.width = `${usedPct.toFixed(0)}%`;
+    $('#r-used').textContent = fmt(expense); $('#r-left').textContent = fmt(Math.max(0, (b.amount||0) - expense));
+
+    // category totals
+    const catMap = {};
+    rows.filter(x=>x.amount<0).forEach(x => { catMap[x.category] = (catMap[x.category]||0) + Math.abs(x.amount); });
+    const tb = $('#r-cats tbody'); tb.innerHTML = '';
+    Object.keys(catMap).sort((a,b)=> a.localeCompare(b)).forEach(k => {
+      const tr=document.createElement('tr'); tr.innerHTML=`<td>${escape(k)}</td><td class="right">${fmt(catMap[k])}</td>`; tb.appendChild(tr);
+    });
+  }
+
+  // ---------- CSV ----------
+  function exportCSVAll(){
+    const headers = ['Date','Type','Payment','Category','Description','Paid','Amount'];
+    const rows = [...state.items].sort((a,b)=> a.date<b.date?1:-1).map(it => [
+      it.date, it.amount>0?'income':'expense', csvEsc(it.paymethod||''), csvEsc(it.category), csvEsc(it.description||''), it.paid?'yes':'no', (it.amount/1).toFixed(2)
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download='budget.csv'; a.click(); URL.revokeObjectURL(url);
+  }
+// ---------- Utils ----------
+
+  // Safe HTML escape
+  function escape(s){
+    const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+    return String(s).replace(/[&<>"']/g, ch => map[ch]);
+  }
+
+})();
