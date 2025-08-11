@@ -333,7 +333,12 @@
     const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download='budget.csv'; a.click(); URL.revokeObjectURL(url);
   }
+// ---------- Utils ----------
 
-  // ---------- Utils ----------
-  function escape(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }[m]); }
+  // Safe HTML escape
+  function escape(s){
+    const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+    return String(s).replace(/[&<>"']/g, ch => map[ch]);
+  }
+
 })();
