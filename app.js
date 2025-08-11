@@ -113,41 +113,25 @@
     } else ov.setAttribute('hidden','');
   }
 
-  
   function renderDashboard(){
     // summary for selected month
     const rows = state.items.filter(it => it.date.startsWith(state.month));
-    const baseIncome = rows.filter(x=>x.amount>0).reduce((a,b)=>a+b.amount,0);
+    let income = rows.filter(x=>x.amount>0).reduce((a,b)=>a+b.amount,0);
+    // Add current pay-period budget to income when it overlaps selected month
+    (function(){
+      const gb = load(GLOBAL_BUDGET, null);
+      if (gb && gb.amount>0){
+        const range = getPeriodRange(gb.periodType, new Date(), gb.anchor);
+        const mStart = new Date(state.month+'-01');
+        const mEnd = new Date(mStart.getFullYear(), mStart.getMonth()+1, 0);
+        if (range.end >= mStart && range.start <= mEnd) income += gb.amount;
+      }
+    })();
     const expenses = rows.filter(x=>x.amount<0).reduce((a,b)=>a+Math.abs(b.amount),0);
-
-    // Adjust income by adding the current pay-period budget IF it overlaps the selected month
-    let income = baseIncome;
-    const gb = load(GLOBAL_BUDGET, null);
-    if (gb && gb.amount > 0){
-      const range = getPeriodRange(gb.periodType, new Date(), gb.anchor);
-      const mStart = new Date(state.month + '-01');
-      const mEnd = new Date(mStart.getFullYear(), mStart.getMonth()+1, 0);
-      const overlaps = (range.end >= mStart && range.start <= mEnd);
-      if (overlaps) income += gb.amount;
-    }
-
-    // Update Summary numbers
     $('#sum-income').textContent = fmt(income);
     $('#sum-expense').textContent = fmt(expenses);
     $('#sum-net').textContent = fmt(income - expenses);
-
-    // Percentage of income spent (uses adjusted income)
-    const [usedPct, leftPct] = percentPair(expenses, Math.max(income, 1));
-    $('#pct-used-left').textContent = `${usedPct.toFixed(0)}%`;
-    $('#pct-left-right').textContent = `${leftPct.toFixed(0)}%`;
-    const bar = $('#pct-bar'); bar.className='progress'+(usedPct<60?'':usedPct<90?' warn':' bad'); bar.querySelector('.bar').style.width = `${usedPct.toFixed(0)}%`;
-
-    // period card
-    renderPeriodCard();
-  }
-
-    }
-const [usedPct, leftPct] = percentPair(expenses, Math.max(income, 1)); // relative to income
+    const [usedPct, leftPct] = percentPair(expenses, Math.max(income, 1)); // relative to income
     $('#pct-used-left').textContent = `${usedPct.toFixed(0)}%`;
     $('#pct-left-right').textContent = `${leftPct.toFixed(0)}%`;
     const bar = $('#pct-bar'); bar.className='progress'+(usedPct<60?'':usedPct<90?' warn':' bad'); bar.querySelector('.bar').style.width = `${usedPct.toFixed(0)}%`;
@@ -327,7 +311,17 @@ const [usedPct, leftPct] = percentPair(expenses, Math.max(income, 1)); // relati
     $('#month-pick').value = state.month;
     $('#report-title').textContent = `Summary for ${state.month}`;
     const rows = state.items.filter(it => it.date.startsWith(state.month));
-    const income = rows.filter(x=>x.amount>0).reduce((a,b)=>a+b.amount,0);
+    let income = rows.filter(x=>x.amount>0).reduce((a,b)=>a+b.amount,0);
+    // Add current pay-period budget to income when it overlaps selected month
+    (function(){
+      const gb = load(GLOBAL_BUDGET, null);
+      if (gb && gb.amount>0){
+        const range = getPeriodRange(gb.periodType, new Date(), gb.anchor);
+        const mStart = new Date(state.month+'-01');
+        const mEnd = new Date(mStart.getFullYear(), mStart.getMonth()+1, 0);
+        if (range.end >= mStart && range.start <= mEnd) income += gb.amount;
+      }
+    })();
     const expense = rows.filter(x=>x.amount<0).reduce((a,b)=>a+Math.abs(b.amount),0);
     $('#r-income').textContent = fmt(income); $('#r-expense').textContent = fmt(expense); $('#r-net').textContent = fmt(income-expense);
 
