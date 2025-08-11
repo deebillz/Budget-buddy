@@ -263,25 +263,31 @@
 
   // ---------- Cards ----------
   function initCards(){
-    renderCards();
-  })();
+  renderCards();
+})();
+
 function renderCards(){
-    $('#month-label').textContent = state.month;
-    const cards = ['Amex Plat','Amex Gold','Amex Blue','Amex Hilton','CSP','CFF','CFU'];
-    // compute from transactions in selected month
-    const rows = state.items.filter(it => it.date.startsWith(state.month));
-    const sums = Object.fromEntries(cards.map(c => [c, 0]));
-    rows.forEach(it => {
-      const card = it.paymethod;
-      if (!cards.includes(card)) return; // ignore Cash, Debit, etc.
-      if (it.amount < 0){ sums[card] += Math.abs(it.amount); } // expense increases balance
-      else { sums[card] -= it.amount; } // income reduces balance (refund/credit)
-    });
-    // render table
-    const div = $('#card-balances'); div.innerHTML='';
-    const tbl=document.createElement('table'); const tb=document.createElement('tbody');
-    let total=0;
-    cards.forEach(c => { const v=sums[c]||0; total+=v; const tr=document.createElement('tr'); tr.innerHTML=`<td>${escape(c)}</td><td class="right">${fmt(v)}</td>`; tb.appendChild(tr); });
-    const tr=document.createElement('tr'); tr.innerHTML=`<td><b>Total</b></td><td class="right"><b>${fmt(total)}</b></td>`; tb.appendChild(tr);
-    tbl.innerHTML = '<thead><tr><th>Card</th><th class="right">Amount</th></tr></thead>'; tbl.appendChild(tb); div.appendChild(tbl);
-  }
+  $('#month-label').textContent = state.month;
+  const cardsList = ['Amex Plat','Amex Gold','Amex Blue','Amex Hilton','CSP','CFF','CFU'];
+  // compute from transactions in selected month
+  const rows = state.items.filter(it => it.date && it.date.startsWith(state.month));
+  const sums = Object.fromEntries(cardsList.map(c => [c, 0]));
+  rows.forEach(it => {
+    const card = it.paymethod;
+    if (!cardsList.includes(card)) return; // ignore Cash, Debit, etc.
+    if (it.amount < 0){ sums[card] += Math.abs(it.amount); } // expense increases balance
+    else { sums[card] -= it.amount; } // income reduces balance (refund/credit)
+  });
+  // render table
+  const div = $('#card-balances'); if (!div) return;
+  const tbl = document.createElement('table');
+  const thead = document.createElement('thead'); thead.innerHTML = '<tr><th>Card</th><th class="right">Amount</th></tr>';
+  const tb = document.createElement('tbody');
+  let total = 0;
+  cardsList.forEach(c => { const v = +(sums[c]||0); total += v;
+    const tr = document.createElement('tr'); tr.innerHTML = `<td>${escape(c)}</td><td class="right">${fmt(v)}</td>`; tb.appendChild(tr);
+  });
+  const trt = document.createElement('tr'); trt.innerHTML = `<td><b>Total</b></td><td class="right"><b>${fmt(total)}</b></td>`; tb.appendChild(trt);
+  tbl.appendChild(thead); tbl.appendChild(tb);
+  div.innerHTML=''; div.appendChild(tbl);
+}
