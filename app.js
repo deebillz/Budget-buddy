@@ -118,7 +118,45 @@
     const rows = state.items.filter(it => it.date.startsWith(state.month));
     let income = rows.filter(x=>x.amount>0).reduce((a,b)=>a+b.amount,0);
     const expenses = rows.filter(x=>x.amount<0).reduce((a,b)=>a+Math.abs(b.amount),0);
-    $('#sum-income').textContent = fmt(income);
+    
+    // Add budgeted pay-period amounts that overlap the selected month
+    (function(){
+      const gb = load(GLOBAL_BUDGET, null);
+      if (!gb || !(gb.amount>0)) return;
+      const mStart = new Date(state.month + '-01');
+      const mEnd = new Date(mStart.getFullYear(), mStart.getMonth()+1, 0);
+      function overlapsCount(){
+        const type = gb.periodType || 'monthly';
+        if (type==='monthly') return 1;
+        if (type==='semimonthly') return 2;
+        if (type==='weekly'){
+          let count=0;
+          let d = new Date(mStart);
+          d.setDate(d.getDate() - d.getDay()); // back to Sunday
+          while (d <= mEnd){
+            const wStart = new Date(d);
+            const wEnd = new Date(d); wEnd.setDate(wEnd.getDate()+6);
+            if (wEnd >= mStart && wStart <= mEnd) count++;
+            d.setDate(d.getDate()+7);
+          }
+          return Math.max(1,count);
+        }
+        if (type==='biweekly'){
+          const MS=86400000;
+          let start = gb.anchor ? new Date(gb.anchor) : new Date(mStart);
+          while (start > mStart) start = new Date(start.getTime()-14*MS);
+          let count=0;
+          for (let s=new Date(start); s<=mEnd; s=new Date(s.getTime()+14*MS)){
+            const e=new Date(s.getTime()+13*MS);
+            if (e >= mStart && s <= mEnd) count++;
+          }
+          return Math.max(1,count);
+        }
+        return 1;
+      }
+      try{ income += overlapsCount() * gb.amount; }catch(_){}
+    })();
+$('#sum-income').textContent = fmt(income);
     $('#sum-expense').textContent = fmt(expenses);
     $('#sum-net').textContent = fmt(income - expenses);
     const [usedPct, leftPct] = percentPair(expenses, Math.max(income, 1)); // relative to income
